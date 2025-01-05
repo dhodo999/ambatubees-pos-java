@@ -22,7 +22,7 @@ Ambatubees POS is a Java-based Point of Sale (POS) system designed to manage sal
 
 1. Clone the repository:
     ```sh
-    git clone https://github.com/yourusername/ambatubeespos.git
+    git clone https://github.com/dhodo999/ambatubeespos.git
     ```
 2. Navigate to the project directory:
     ```sh
