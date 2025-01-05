@@ -9,7 +9,6 @@ Ambatubees POS is a Java-based Point of Sale (POS) system designed to manage sal
 - Sales management
 - Inventory tracking
 - Customer data management
-- Reporting and analytics
 
 ## Technologies Used
 
