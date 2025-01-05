@@ -212,12 +212,12 @@ public class OrderItemController implements Initializable {
 
     private void updateOrderTotalAmount(String orderId) {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement("SELECT SUM(SubTotal) AS TotalAmount FROM order_items WHERE OrderID = ?")) {
+             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_ORDER_TOTAL_AMOUNT)) {
             preparedStatement.setString(1, orderId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     double totalAmount = resultSet.getDouble("TotalAmount");
-                    try (PreparedStatement updateStmt = connection.prepareStatement("UPDATE orders SET TotalAmount = ? WHERE OrderID = ?")) {
+                    try (PreparedStatement updateStmt = connection.prepareStatement(QueryHelper.UPDATE_ORDER_TOTAL_AMOUNT)) {
                         updateStmt.setDouble(1, totalAmount);
                         updateStmt.setString(2, orderId);
                         updateStmt.executeUpdate();

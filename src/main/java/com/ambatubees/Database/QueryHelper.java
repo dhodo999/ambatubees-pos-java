@@ -22,9 +22,11 @@ public class QueryHelper {
     public static final String SELECT_ORDER = "SELECT o.OrderID, o.CustomerID, c.CustomerName, o.OrderDate, o.TotalAmount, o.Status " + "FROM orders o " + "JOIN customers c ON o.CustomerID = c.CustomerID";
     public static final String SELECT_ORDER_ID = "SELECT OrderID FROM orders";
     public static final String SELECT_TOTAL_AMOUNT = "SELECT TotalAmount FROM orders WHERE OrderID = ?";
+    public static final String SELECT_ORDER_TOTAL_AMOUNT = "SELECT SUM(SubTotal) AS TotalAmount FROM order_items WHERE OrderID = ?";
     public static final String INSERT_ORDER = "INSERT INTO orders (CustomerID, OrderDate, TotalAmount, Status) VALUES (?, ?, ?, ?)";
     public static final String UPDATE_ORDER = "UPDATE orders SET CustomerID = ?, OrderDate = ?, TotalAmount = ?, Status = ? WHERE OrderID = ?";
     public static final String UPDATE_ORDER_STATUS = "UPDATE orders SET Status = ? WHERE OrderID = ?";
+    public static final String UPDATE_ORDER_TOTAL_AMOUNT = "UPDATE orders SET TotalAmount = ? WHERE OrderID = ?";
     public static final String COUNT_ORDER = "SELECT COUNT(*) FROM order_items WHERE OrderID = ?";
     public static final String SELECT_ORDER_ITEM = "SELECT oi.OrderItemID, oi.OrderID, oi.ProductID, p.ProductDescription, oi.Price, oi.Quantity, oi.SubTotal " + "FROM order_items oi " + "JOIN products p ON oi.ProductID = p.ProductID";
     public static final String INSERT_ORDER_ITEM = "INSERT INTO order_items (OrderID, ProductID, Price, Quantity, SubTotal) VALUES (?, ?, ?, ?, ?)";
