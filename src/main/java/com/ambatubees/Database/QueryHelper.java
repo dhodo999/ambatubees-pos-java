@@ -13,6 +13,7 @@ public class QueryHelper {
     public static final String SELECT_PRODUCT_PRICE = "SELECT ProductPrice FROM products WHERE ProductID = ?";
     public static final String INSERT_PRODUCT = "INSERT INTO products (ProductDescription, ProductPrice, ProductCategory, Weight, ProductImage, ProductStatus) VALUES (?, ?, ?, ?, ?, ?)";
     public static final String UPDATE_PRODUCT = "UPDATE products SET ProductDescription = ?, ProductPrice = ?, ProductCategory = ?, Weight = ?, ProductImage = ?, ProductStatus = ? WHERE ProductID = ?";
+    public static final String UPDATE_PRODUCT_WITH_IMAGE = "UPDATE products SET ProductDescription = ?, ProductPrice = ?, ProductCategory = ?, Weight = ?, ProductImage = ?, ProductStatus = ? WHERE ProductID = ?";
     public static final String DELETE_PRODUCT = "DELETE FROM products WHERE ProductID = ?";
     public static final String COUNT_PRODUCT = "SELECT COUNT(*) FROM order_items WHERE ProductID = ?";
     public static final String SELECT_CATEGORY = "SELECT * FROM categories";

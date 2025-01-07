@@ -18,6 +18,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -110,7 +111,8 @@ public class OrderItemController implements Initializable {
             String quantity = etQuantity.getText();
             String sql = QueryHelper.UPDATE_ORDER_ITEM;
 
-            executeQuery(sql, orderId, productId, etPrice.getText(), quantity, etSubTotal.getText(), String.valueOf(orderItem.getId()));
+            executeQuery(sql, orderId, productId, etPrice.getText(), quantity, etSubTotal.getText(),
+                    String.valueOf(orderItem.getId()));
             refreshUI(orderId, event);
         } catch (Exception e) {
             e.printStackTrace();
@@ -138,13 +140,14 @@ public class OrderItemController implements Initializable {
 
     private void executeQuery(String sql, String... params) {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             for (int i = 0; i < params.length; i++) {
                 preparedStatement.setString(i + 1, params[i]);
             }
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             handleSQLException(ex, "Error executing query");
+
         }
     }
 
@@ -156,17 +159,43 @@ public class OrderItemController implements Initializable {
         colPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
         colQuantity.setCellValueFactory(new PropertyValueFactory<>("quantity"));
         colSubTotal.setCellValueFactory(new PropertyValueFactory<>("subTotal"));
+
+        colPrice.setCellFactory(tc -> new TableCell<OrderItem, Double>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", price));
+                }
+            }
+        });
+
+        colSubTotal.setCellFactory(tc -> new TableCell<OrderItem, Double>() {
+            @Override
+            protected void updateItem(Double subTotal, boolean empty) {
+                super.updateItem(subTotal, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", subTotal));
+                }
+            }
+        });
+
         tableOrderItem.setItems(orderItems);
     }
 
     private ObservableList<OrderItem> getOrderItem() {
         ObservableList<OrderItem> orderItems = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(QueryHelper.SELECT_ORDER_ITEM)) {
+                Statement st = connection.createStatement();
+                ResultSet rs = st.executeQuery(QueryHelper.SELECT_ORDER_ITEM)) {
             while (rs.next()) {
                 orderItems.add(new OrderItem(rs.getInt("OrderItemID"), rs.getInt("OrderID"), rs.getInt("ProductID"),
-                        rs.getString("ProductDescription"), rs.getDouble("Price"), rs.getInt("Quantity"), rs.getDouble("SubTotal")));
+                        rs.getString("ProductDescription"), rs.getDouble("Price"), rs.getInt("Quantity"),
+                        rs.getDouble("SubTotal")));
             }
         } catch (SQLException e) {
             handleSQLException(e, "Error fetching order items");
@@ -184,7 +213,7 @@ public class OrderItemController implements Initializable {
 
     private void fetchAndDisplayProductPrice(int productId) {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_PRODUCT_PRICE)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_PRODUCT_PRICE)) {
             preparedStatement.setInt(1, productId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
@@ -212,12 +241,14 @@ public class OrderItemController implements Initializable {
 
     private void updateOrderTotalAmount(String orderId) {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_ORDER_TOTAL_AMOUNT)) {
+                PreparedStatement preparedStatement = connection
+                        .prepareStatement(QueryHelper.SELECT_ORDER_TOTAL_AMOUNT)) {
             preparedStatement.setString(1, orderId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
                     double totalAmount = resultSet.getDouble("TotalAmount");
-                    try (PreparedStatement updateStmt = connection.prepareStatement(QueryHelper.UPDATE_ORDER_TOTAL_AMOUNT)) {
+                    try (PreparedStatement updateStmt = connection
+                            .prepareStatement(QueryHelper.UPDATE_ORDER_TOTAL_AMOUNT)) {
                         updateStmt.setDouble(1, totalAmount);
                         updateStmt.setString(2, orderId);
                         updateStmt.executeUpdate();
@@ -232,8 +263,8 @@ public class OrderItemController implements Initializable {
     public void populateOrderID() {
         ObservableList<Order> orderList = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_ORDER_ID);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_ORDER_ID);
+                ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
                 orderList.add(new Order(resultSet.getInt("OrderID")));
             }
@@ -246,8 +277,8 @@ public class OrderItemController implements Initializable {
     private void populateProductName() {
         ObservableList<Product> productList = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_PRODUCT_NAME);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_PRODUCT_NAME);
+                ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
                 productList.add(new Product(resultSet.getInt("ProductID"), resultSet.getString("ProductDescription")));
             }
@@ -271,8 +302,11 @@ public class OrderItemController implements Initializable {
 
     private void populateFields(OrderItem orderItem) {
         etID.setText(String.valueOf(orderItem.getId()));
-        cbOrderID.getItems().stream().filter(order -> order.getId() == orderItem.getOrderId()).findFirst().ifPresent(order -> cbOrderID.getSelectionModel().select(order));
-        cbProductName.getItems().stream().filter(product -> product.getProductDescription().equals(orderItem.getDescription())).findFirst().ifPresent(product -> cbProductName.getSelectionModel().select(product));
+        cbOrderID.getItems().stream().filter(order -> order.getId() == orderItem.getOrderId()).findFirst()
+                .ifPresent(order -> cbOrderID.getSelectionModel().select(order));
+        cbProductName.getItems().stream()
+                .filter(product -> product.getProductDescription().equals(orderItem.getDescription())).findFirst()
+                .ifPresent(product -> cbProductName.getSelectionModel().select(product));
         etPrice.setText(String.valueOf(orderItem.getPrice()));
         etQuantity.setText(String.valueOf(orderItem.getQuantity()));
         etSubTotal.setText(String.valueOf(orderItem.getSubTotal()));
@@ -295,8 +329,10 @@ public class OrderItemController implements Initializable {
     }
 
     private boolean areFieldsValid() {
-        if (cbOrderID.getSelectionModel().isEmpty() || cbProductName.getSelectionModel().isEmpty() || etQuantity.getText().isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, DashboardController.getPrimaryStage(), "Error", "Please fill all the fields");
+        if (cbOrderID.getSelectionModel().isEmpty() || cbProductName.getSelectionModel().isEmpty()
+                || etQuantity.getText().isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, DashboardController.getPrimaryStage(), "Error",
+                    "Please fill all the fields");
             return false;
         }
         return true;

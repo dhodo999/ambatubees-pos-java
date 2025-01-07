@@ -26,6 +26,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -104,7 +105,6 @@ public class ProductController implements Initializable {
                 ivProduct.setPreserveRatio(false);
                 ivProduct.setSmooth(true);
                 ivProduct.setCache(true);
-                ivProduct.setFitWidth(ivProduct.getParent().getLayoutBounds().getWidth());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -165,28 +165,54 @@ public class ProductController implements Initializable {
             }
         } catch (Exception e) {
             e.printStackTrace();
+
         }
     }
 
     @FXML
     void updateProduct(ActionEvent event) {
-        try {
+        try (Connection conn = Database.connect()) {
             Product product = tableProduct.getSelectionModel().getSelectedItem();
-            String sql = QueryHelper.UPDATE_PRODUCT;
-            if (file != null) {
-                executeQuery(sql, etDescription.getText(), etPrice.getText(),
-                        cbCategory.getSelectionModel().getSelectedItem(),
-                        cbWeight.getSelectionModel().getSelectedItem(), file.getAbsolutePath(),
-                        cbStatus.getSelectionModel().getSelectedItem(),
-                        String.valueOf(product.getId()));
-            } else {
-                executeQuery(sql, etDescription.getText(), etPrice.getText(),
-                        cbCategory.getSelectionModel().getSelectedItem(),
-                        cbWeight.getSelectionModel().getSelectedItem(), null,
-                        cbStatus.getSelectionModel().getSelectedItem(),
-                        String.valueOf(product.getId()));
+            String description = etDescription.getText();
+            String price = etPrice.getText();
+            String category = cbCategory.getSelectionModel().getSelectedItem();
+            String isWeight = cbWeight.getSelectionModel().getSelectedItem();
+            String status = cbStatus.getSelectionModel().getSelectedItem();
+
+            if (description.isEmpty() || price.isEmpty() || category.isEmpty() || isWeight.isEmpty()
+                    || status.isEmpty()) {
+                showAlert(Alert.AlertType.ERROR, DashboardController.getPrimaryStage(), "Error",
+                        "Please fill all fields");
+                return;
             }
-            showProduct();
+
+            String sql = file != null ? QueryHelper.UPDATE_PRODUCT_WITH_IMAGE : QueryHelper.UPDATE_PRODUCT;
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, description);
+                ps.setString(2, price);
+                ps.setString(3, category);
+                ps.setString(4, isWeight);
+                if (file != null) {
+                    FileInputStream fis = new FileInputStream(file);
+                    ps.setBinaryStream(5, fis, (int) file.length());
+                    ps.setString(6, status);
+                    ps.setInt(7, product.getId());
+                } else {
+                    ps.setString(5, status);
+                    ps.setInt(6, product.getId());
+                }
+
+                int res = ps.executeUpdate();
+                if (res > 0) {
+                    showAlert(Alert.AlertType.INFORMATION, DashboardController.getPrimaryStage(), "Success",
+                            "Product updated successfully");
+                    clearFields();
+                    showProduct();
+                } else {
+                    showAlert(Alert.AlertType.ERROR, DashboardController.getPrimaryStage(), "Error",
+                            "Failed to update product");
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -222,6 +248,7 @@ public class ProductController implements Initializable {
             preparedStatement.executeUpdate();
         } catch (SQLException ex) {
             ex.printStackTrace();
+
         }
     }
 
@@ -232,6 +259,19 @@ public class ProductController implements Initializable {
         colPrice.setCellValueFactory(new PropertyValueFactory<>("price"));
         colCategory.setCellValueFactory(new PropertyValueFactory<>("category"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        colPrice.setCellFactory(tc -> new TableCell<Product, Double>() {
+            @Override
+            protected void updateItem(Double price, boolean empty) {
+                super.updateItem(price, empty);
+                if (empty) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", price));
+                }
+            }
+        });
+
         tableProduct.setItems(list);
     }
 

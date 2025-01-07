@@ -38,7 +38,7 @@ public class TransactionController implements Initializable {
     private Button btnClear, btnSave, btnUpdate;
 
     @FXML
-    private DatePicker datePicker;
+    private DatePicker DatePicker;
 
     @FXML
     private ComboBox<Order> cbOrderID;
@@ -87,21 +87,24 @@ public class TransactionController implements Initializable {
     @FXML
     void saveTransaction(ActionEvent event) {
         try {
-            if (!validateForm()) return;
+            if (!validateForm())
+                return;
 
             Order selectedOrder = cbOrderID.getSelectionModel().getSelectedItem();
             String orderId = String.valueOf(selectedOrder.getId());
-            LocalDate orderDate = datePicker.getValue();
+            LocalDate orderDate = DatePicker.getValue();
             double amountPaid = Double.parseDouble(etAmountPaid.getText());
             String paymentMethod = cbPaymentMethod.getSelectionModel().getSelectedItem();
             double totalAmount = getOrderTotalAmount(Integer.parseInt(orderId));
             double excessAmount = amountPaid - totalAmount;
 
             String formattedOrderDate = orderDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            executeQuery(QueryHelper.INSERT_TRANSACTION, orderId, formattedOrderDate, paymentMethod, amountPaid, excessAmount);
+            executeQuery(QueryHelper.INSERT_TRANSACTION, orderId, formattedOrderDate, paymentMethod, amountPaid,
+                    excessAmount);
             executeQuery(QueryHelper.UPDATE_ORDER_STATUS, "Success", selectedOrder.getId());
 
-            showAlert(Alert.AlertType.INFORMATION, DashboardController.getPrimaryStage(), "Success", "Transaction saved successfully");
+            showAlert(Alert.AlertType.INFORMATION, DashboardController.getPrimaryStage(), "Success",
+                    "Transaction saved successfully");
             refreshUI(event);
         } catch (Exception e) {
             e.printStackTrace();
@@ -111,20 +114,23 @@ public class TransactionController implements Initializable {
     @FXML
     void updateTransaction(ActionEvent event) {
         try {
-            if (!validateForm()) return;
+            if (!validateForm())
+                return;
 
             Transaction selectedTransaction = tableTransaction.getSelectionModel().getSelectedItem();
             Order selectedOrder = cbOrderID.getSelectionModel().getSelectedItem();
-            LocalDate orderDate = datePicker.getValue();
+            LocalDate orderDate = DatePicker.getValue();
             double amountPaid = Double.parseDouble(etAmountPaid.getText());
             String paymentMethod = cbPaymentMethod.getSelectionModel().getSelectedItem();
             double totalAmount = getOrderTotalAmount(selectedOrder.getId());
             double excessAmount = amountPaid - totalAmount;
 
             String formattedOrderDate = orderDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            executeQuery(QueryHelper.UPDATE_TRANSACTION, selectedOrder.getId(), paymentMethod, formattedOrderDate, amountPaid, excessAmount, selectedTransaction.getId());
+            executeQuery(QueryHelper.UPDATE_TRANSACTION, selectedOrder.getId(), paymentMethod, formattedOrderDate,
+                    amountPaid, excessAmount, selectedTransaction.getId());
 
-            showAlert(Alert.AlertType.INFORMATION, DashboardController.getPrimaryStage(), "Success", "Transaction updated successfully");
+            showAlert(Alert.AlertType.INFORMATION, DashboardController.getPrimaryStage(), "Success",
+                    "Transaction updated successfully");
             refreshUI(event);
         } catch (Exception e) {
             e.printStackTrace();
@@ -135,7 +141,7 @@ public class TransactionController implements Initializable {
     void clearField(ActionEvent event) {
         etID.clear();
         cbOrderID.getSelectionModel().clearSelection();
-        datePicker.getEditor().clear();
+        DatePicker.getEditor().clear();
         cbPaymentMethod.getSelectionModel().clearSelection();
         etAmountPaid.clear();
         etExcessAmount.clear();
@@ -153,21 +159,47 @@ public class TransactionController implements Initializable {
         colAmountPaid.setCellValueFactory(new PropertyValueFactory<>("amountPaid"));
         colExcessAmount.setCellValueFactory(new PropertyValueFactory<>("excessAmount"));
 
-        colTransactionDate.setCellFactory(column -> new TextFieldTableCell<>(new LocalDateStringConverter(DATE_FORMATTER, null)) {
+        colAmountPaid.setCellFactory(tc -> new TextFieldTableCell<>(new javafx.util.converter.DoubleStringConverter()) {
             @Override
-            public void updateItem(LocalDate item, boolean empty) {
+            public void updateItem(Double item, boolean empty) {
                 super.updateItem(item, empty);
-                setText(empty || item == null ? null : DATE_FORMATTER.format(item));
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText(String.format("%,.2f", item));
+                }
             }
         });
+
+        colExcessAmount
+                .setCellFactory(tc -> new TextFieldTableCell<>(new javafx.util.converter.DoubleStringConverter()) {
+                    @Override
+                    public void updateItem(Double item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setText(null);
+                        } else {
+                            setText(String.format("%,.2f", item));
+                        }
+                    }
+                });
+
+        colTransactionDate
+                .setCellFactory(column -> new TextFieldTableCell<>(new LocalDateStringConverter(DATE_FORMATTER, null)) {
+                    @Override
+                    public void updateItem(LocalDate item, boolean empty) {
+                        super.updateItem(item, empty);
+                        setText(empty || item == null ? null : DATE_FORMATTER.format(item));
+                    }
+                });
         tableTransaction.setItems(transactionList);
     }
 
     private ObservableList<Transaction> getTransactionList() {
         ObservableList<Transaction> transactionList = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(QueryHelper.SELECT_TRANSACTION)) {
+                Statement st = connection.createStatement();
+                ResultSet rs = st.executeQuery(QueryHelper.SELECT_TRANSACTION)) {
 
             while (rs.next()) {
                 Transaction transaction = new Transaction(rs.getInt("TransactionID"),
@@ -187,8 +219,8 @@ public class TransactionController implements Initializable {
     private void populateOrderID() {
         ObservableList<Order> orderList = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_ORDER);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_ORDER);
+                ResultSet resultSet = preparedStatement.executeQuery()) {
 
             while (resultSet.next()) {
                 Order order = new Order(resultSet.getInt("OrderID"),
@@ -208,7 +240,7 @@ public class TransactionController implements Initializable {
     private double getOrderTotalAmount(int orderId) {
         double totalAmount = 0;
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_TOTAL_AMOUNT)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_TOTAL_AMOUNT)) {
 
             preparedStatement.setInt(1, orderId);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -248,7 +280,7 @@ public class TransactionController implements Initializable {
 
     private void fetchAndDisplayExcessAmount() {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_TOTAL_AMOUNT)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_TOTAL_AMOUNT)) {
 
             Order selectedOrder = cbOrderID.getSelectionModel().getSelectedItem();
             if (selectedOrder != null) {
@@ -267,7 +299,7 @@ public class TransactionController implements Initializable {
 
     private void executeQuery(String sql, Object... params) {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             for (int i = 0; i < params.length; i++) {
                 if (params[i] instanceof String) {
@@ -306,7 +338,7 @@ public class TransactionController implements Initializable {
                 .filter(order -> order.getId() == transaction.getOrderId())
                 .findFirst()
                 .ifPresent(order -> cbOrderID.getSelectionModel().select(order));
-        datePicker.setValue(transaction.getOrderDate());
+        DatePicker.setValue(transaction.getOrderDate());
         cbPaymentMethod.setValue(transaction.getPaymentMethod());
         etAmountPaid.setText(String.valueOf(transaction.getAmountPaid()));
         etExcessAmount.setText(String.valueOf(transaction.getExcessAmount()));
@@ -314,12 +346,14 @@ public class TransactionController implements Initializable {
 
     private boolean validateForm() {
         Order selectedOrder = cbOrderID.getSelectionModel().getSelectedItem();
-        LocalDate orderDate = datePicker.getValue();
+        LocalDate orderDate = DatePicker.getValue();
         String amountPaidStr = etAmountPaid.getText();
         String paymentMethod = cbPaymentMethod.getSelectionModel().getSelectedItem();
 
-        if (selectedOrder == null || orderDate == null || amountPaidStr.isEmpty() || paymentMethod == null || paymentMethod.isEmpty()) {
-            showAlert(Alert.AlertType.ERROR, btnSave.getScene().getWindow(), "Form Error!", "Please fill in all fields");
+        if (selectedOrder == null || orderDate == null || amountPaidStr.isEmpty() || paymentMethod == null
+                || paymentMethod.isEmpty()) {
+            showAlert(Alert.AlertType.ERROR, btnSave.getScene().getWindow(), "Form Error!",
+                    "Please fill in all fields");
             return false;
         }
         return true;

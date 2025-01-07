@@ -42,7 +42,7 @@
          <children>
             <Pane id="imageBox" prefHeight="200.0" prefWidth="246.0" stylesheets="@../css/style.css">
                <children>
-                  <ImageView fx:id="ivProduct" fitHeight="184.0" fitWidth="240.0" layoutX="3.0" layoutY="4.0" pickOnBounds="true" preserveRatio="true" />
+                  <ImageView fx:id="ivProduct" fitHeight="181.0" fitWidth="236.0" layoutX="5.0" layoutY="6.0" pickOnBounds="true" preserveRatio="true" />
                </children>
             </Pane>
             <Button fx:id="btnBrowse" layoutX="10.0" layoutY="553.0" mnemonicParsing="false" onAction="#handleBrowseImage" prefHeight="35.0" prefWidth="246.0" style="-fx-background-color: #fa8231;" text="Browse..." textFill="WHITE">

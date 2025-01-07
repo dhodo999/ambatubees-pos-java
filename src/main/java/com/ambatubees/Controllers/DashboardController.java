@@ -56,7 +56,8 @@ public class DashboardController implements Initializable {
     private DatePicker DatePicker;
 
     @FXML
-    private Button btnAddOrder, btnCancelOrder, btnUpdateOrder, btnClear, btnOrderItems, btnPayment, btnManageCustomer, btnManageProduct;
+    private Button btnAddOrder, btnCancelOrder, btnUpdateOrder, btnClear, btnOrderItems, btnPayment, btnManageCustomer,
+            btnManageProduct;
 
     @FXML
     private ComboBox<Customer> cbCustomerName;
@@ -88,14 +89,30 @@ public class DashboardController implements Initializable {
     @FXML
     void handleKeyPressed(KeyEvent event) {
         switch (event.getCode()) {
-            case F1: handleOrder(null); break;
-            case F2: openModalWindow("/com/ambatubees/fxml/OrderItem.fxml", "Manage Order Items"); break;
-            case F3: cancelOrder(null); break;
-            case F4: openModalWindow("/com/ambatubees/fxml/Product.fxml", "Manage Product"); break;
-            case F5: openModalWindow("/com/ambatubees/fxml/Customer.fxml", "Manage Customer"); break;
-            case F6: openModalWindow("/com/ambatubees/fxml/Transaction.fxml", "Payment"); break;
-            case F7: logoutConfirmation(event); break;
-            default: System.out.println("Unhandled key: " + event.getCode()); break;
+            case F1:
+                handleOrder(null);
+                break;
+            case F2:
+                openModalWindow("/com/ambatubees/fxml/OrderItem.fxml", "Manage Order Items");
+                break;
+            case F3:
+                cancelOrder(null);
+                break;
+            case F4:
+                openModalWindow("/com/ambatubees/fxml/Product.fxml", "Manage Product");
+                break;
+            case F5:
+                openModalWindow("/com/ambatubees/fxml/Customer.fxml", "Manage Customer");
+                break;
+            case F6:
+                openModalWindow("/com/ambatubees/fxml/Transaction.fxml", "Payment");
+                break;
+            case F7:
+                logoutConfirmation(event);
+                break;
+            default:
+                System.out.println("Unhandled key: " + event.getCode());
+                break;
         }
     }
 
@@ -242,6 +259,22 @@ public class DashboardController implements Initializable {
         colTotal.setCellValueFactory(new PropertyValueFactory<>("totalAmount"));
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
+        colTotal.setCellFactory(column -> new TextFieldTableCell<>(new javafx.util.StringConverter<Double>() {
+            @Override
+            public String toString(Double object) {
+                return String.format("%,.2f", object);
+            }
+
+            @Override
+            public Double fromString(String string) {
+                try {
+                    return Double.parseDouble(string.replace(",", ""));
+                } catch (NumberFormatException e) {
+                    return 0.0;
+                }
+            }
+        }));
+
         colDate.setCellFactory(column -> new TextFieldTableCell<>(new LocalDateStringConverter(DATE_FORMATTER, null)) {
             @Override
             public void updateItem(LocalDate item, boolean empty) {
@@ -255,8 +288,8 @@ public class DashboardController implements Initializable {
     private ObservableList<Order> getOrderList() {
         ObservableList<Order> orderList = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             Statement st = connection.createStatement();
-             ResultSet rs = st.executeQuery(QueryHelper.SELECT_ORDER)) {
+                Statement st = connection.createStatement();
+                ResultSet rs = st.executeQuery(QueryHelper.SELECT_ORDER)) {
 
             while (rs.next()) {
                 Order order = new Order(rs.getInt("OrderID"),
@@ -276,8 +309,8 @@ public class DashboardController implements Initializable {
     public void populateCustomerName() {
         ObservableList<Customer> customerList = FXCollections.observableArrayList();
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_CUSTOMER_NAME);
-             ResultSet resultSet = preparedStatement.executeQuery()) {
+                PreparedStatement preparedStatement = connection.prepareStatement(QueryHelper.SELECT_CUSTOMER_NAME);
+                ResultSet resultSet = preparedStatement.executeQuery()) {
 
             while (resultSet.next()) {
                 int customerId = resultSet.getInt("CustomerID");
@@ -292,7 +325,7 @@ public class DashboardController implements Initializable {
 
     private void executeQuery(String sql, String... params) {
         try (Connection connection = Database.connect();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
 
             for (int i = 0; i < params.length; i++) {
                 preparedStatement.setString(i + 1, params[i]);
